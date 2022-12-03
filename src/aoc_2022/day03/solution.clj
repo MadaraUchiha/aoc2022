@@ -12,25 +12,22 @@
 			(- (int uppercased) 64)
 			(if uppercase? 26 0))))
 
+(defn parse-group [group]
+	(map set group))
+
 (defn parse-line [line]
 	(let [cutoff       (/ (count line) 2)
-		  [left right] (split-at cutoff line)]
-		[(into #{} (seq left))
-		 (into #{} (seq right))]))
-
-(defn parse-elf-group [group]
-	(map #(into #{} (seq %)) group))
+		  rucksacks    (split-at cutoff line)]
+		(parse-group rucksacks)))
 
 (defn parse-input1 [input]
-	(as-> input $
-		(split $ #"\n")
-		(map parse-line $)))
+	(->> (split input #"\n")
+		(map parse-line)))
 
 (defn parse-input2 [input]
-	(as-> input $
-		(split $ #"\n")
-		(partition 3 $)
-		(map parse-elf-group $)))
+	(->> (split input #"\n")
+		(partition 3)
+		(map parse-group)))
 
 (defn find-common [groups]
 	(first (apply intersection groups)))
@@ -53,4 +50,5 @@
   (priority \Z)
   (first #{\a})
   (part-1 input)
-  (part-2 input))
+  (part-2 input)
+  (into #{} "hello"))
