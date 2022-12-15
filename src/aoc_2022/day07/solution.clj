@@ -1,7 +1,7 @@
 (ns aoc-2022.day07.solution 
   (:require
    [clojure.string :as str]
-   [com.rpl.specter :refer [recursive-path if-path continue-then-stay MAP-VALS ALL FIRST LAST]]))
+   [clojure.pprint :as pp]))
 
 (def input (slurp "src/aoc_2022/day07/input.txt"))
 
@@ -31,40 +31,62 @@ $ ls
 ")
 
 (def initial-fs {:pwd [] :dirs {}})
+(def total-fs-size 70000000)
+(def desired-fs-size 30000000)
 
-(comment "sample structure"
-  { :pwd  ["/" "a" "e"]
-    :dirs {"/" {"a" {"e" {"i" 584}
-                    "f" 29116
-                    "g" 2557
-                    "h.lst" 62596
-               "b.txt" 14848514}}}})
+(defn map-values [f coll]
+  (->> coll
+    (map (fn [[k v]] [k (f v)]))
+    (into {})))
 
-(comment "alternative structure"
-    {:pwd ["/" "a" "e"]
-     :dirs [{:path "//a/e/i" :size 584}
-            {:path "//a/f"   :size 29116}]})
+(defn create-file 
+  "Creates the file in the path, and all parent paths"
+  [fs path file]
+  (->> (range) ;; 0 1 2 3 4 5 6 ...
+    (take (count path)) ;; 0 1 2
+    (map inc) ;; 1 2 3
+    (map #(subvec path 0 %)) ;; ["a"] ["a" "b"] ["a" "b" "c"]
+    (reduce (fn [acc curr] (update-in acc [:dirs curr] conj file)) fs)))
 
 (defn apply-command [{:keys [pwd] :as fs} command]
   (let [[cmd1 cmd2 cmd3] (str/split command #" ")]
     (cond
-      ; (= cmd1 "dir")              (assoc fs (str/join "/" pwd) {})
-      (parse-long cmd1)           (assoc-in fs [:dirs (str/join "/" (conj pwd cmd2))] (parse-long cmd1))
+      (parse-long cmd1)           (create-file fs pwd {:name cmd2 :size (parse-long cmd1)})
       (= [cmd1 cmd2] ["$" "cd"])  (update fs :pwd (if (= cmd3 "..") pop #(conj % cmd3)))
-      :else-other-commands        fs)))
+      :else                       fs))) ;; other commands ignored
 
 (defn parse-input [input]
   (->> (str/split input #"\n")
-       (reduce apply-command initial-fs)))
+       (reduce apply-command initial-fs)
+       :dirs))
 
-(def MAP-NODES
-   (recursive-path [] p
-     (if-path map?
-     (continue-then-stay MAP-VALS p))))
+(defn part-1 
+  "Find the sum of all folders (incl. subfolders) with size smaller than 100000"
+  [input]
+  (->> input
+    parse-input
+    (map-values #(map :size %))
+    (map-values #(reduce + %))
+    (map second)
+    (filter #(> 100000 %))
+    (reduce +)))
 
-(def map-key-walker (recursive-path [akey] p [ALL (if-path [FIRST #(= % akey)] LAST [LAST p])]))
-
-
+(defn part-2 
+  "Find smallest directory to delete to free up enough space"
+  [input]
+  (let [dir-to-size    (->> input
+                         parse-input
+                         (map-values #(map :size %))
+                         (map-values #(reduce + %)))
+        total-occupied (get dir-to-size ["/"])
+        total-free     (- total-fs-size total-occupied)
+        to-free        (- desired-fs-size total-free)]
+        
+    (->> dir-to-size
+      (map second)
+      (filter #(< to-free %))
+      (sort)
+      (first))))
 
 (comment
   (-> initial-fs
@@ -74,5 +96,7 @@ $ ls
       (apply-command "dir b")
       (apply-command "123 c.txt")
       (apply-command "$ cd .."))
-  (pp/pprint (parse-input sample-input))
-  )
+  (pp/pprint (parse-input sample-input)))
+
+(comment (pp/pprint (part-1 input)))
+(comment (pp/pprint (part-2 input)))
