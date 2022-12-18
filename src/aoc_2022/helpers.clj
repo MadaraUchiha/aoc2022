@@ -35,3 +35,15 @@
 
 (defn pairwise [coll]
   (partition 2 1 coll))
+
+(defn read-input [day]
+  (slurp (format "src/aoc_2022/day%02d/input.txt" day)))
+
+(defn read-sample [day]
+  (slurp (format "src/aoc_2022/day%02d/sample.txt" day)))
+
+(defn within? [n target epsilon]
+  (-> target
+      (- n)
+      abs
+      (<= epsilon)))
