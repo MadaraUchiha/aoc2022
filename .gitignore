@@ -4,3 +4,5 @@
 .nrepl-port
 .DS_Store
 aoc.sublime-*
+.lein-repl-history
+target/
