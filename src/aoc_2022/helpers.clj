@@ -26,3 +26,12 @@
 
 (defn maxv [coll]
   (apply max (conj coll ##-Inf)))
+
+(defn v+ [v1 v2]
+  (mapv + v1 v2))
+
+(defn v- [v1 v2]
+  (mapv - v1 v2))
+
+(defn pairwise [coll]
+  (partition 2 1 coll))
