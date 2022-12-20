@@ -47,3 +47,6 @@
       (- n)
       abs
       (<= epsilon)))
+
+(defn re-extract [re s]
+  (second (re-find re s)))
